@@ -44,8 +44,8 @@ jobs:
        terraform destroy -auto-approve \
        -target=aws_lb.medusa \
        -target=aws_lb_target_group.medusa \
-       -target=aws_iam_role.ecs_task_exec || true
-       -target=module.vpc
+       -target=aws_iam_role.ecs_task_exec 
+       -target=module.vpc || true
 
     - name: Terraform Apply
       working-directory: terraform
