@@ -1,0 +1,41 @@
+name: Deploy Medusa
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Configure AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Build & Push Docker image
+      run: |
+        docker build -t medusa .
+        docker tag medusa:latest ${{ secrets.ECR_REPO_URL }}:latest
+        docker push ${{ secrets.ECR_REPO_URL }}:latest
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+
+    - name: Terraform Init
+      working-directory: terraform
+      run: terraform init
+
+    - name: Terraform Apply
+      working-directory: terraform
+      run: terraform apply -auto-approve -var="ecr_repo_url=${{ secrets.ECR_REPO_URL }}" -var="database_url=${{ secrets.DATABASE_URL }}" -var="redis_url=${{ secrets.REDIS_URL }}"
+
