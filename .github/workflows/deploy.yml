@@ -1,4 +1,4 @@
-name: Deploy Medusa
+name: Deploy Medusa to AWS ECS with Terraform
 
 on:
   push:
@@ -9,52 +9,41 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
+    - name: 📥 Checkout code
       uses: actions/checkout@v3
 
-    - name: Configure AWS
+    - name: 🔐 Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: Login to Amazon ECR
+    - name: 🐳 Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build & Push Docker image
+    - name: 🏗️ Build and Push Docker image
       run: |
-        docker build -t medusa .
+        docker build -t medusa ./medusa-awsfargate
         docker tag medusa:latest ${{ secrets.ECR_REPO_URL }}:latest
         docker push ${{ secrets.ECR_REPO_URL }}:latest
 
-    - name: Setup Terraform
+    - name: 🧰 Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
-    - name: Clean .terraform directory (important for module version issues)
+    - name: 🧹 Clean Terraform state (optional safety)
       run: rm -rf .terraform .terraform.lock.hcl
       working-directory: terraform
 
-    - name: Terraform Init (with upgrade)
+    - name: 🛠️ Terraform Init
       working-directory: terraform
       run: terraform init -upgrade
 
-    - name: Terraform Clean Destroy (Conflicts)
-      run: |
-       terraform init
-       terraform destroy -auto-approve \
-       -target=aws_lb.medusa \
-       -target=aws_lb_target_group.medusa \
-       -target=aws_iam_role.ecs_task_exec \
-       -target=aws_ecs_cluster.medusa \
-       -target=aws_ecs_service.medusa \
-       -target=aws_ecs_task_definition.medusa \
-       -target=module.vpc || true
-    - name: Terraform Apply
+    - name: 🚀 Terraform Apply Infrastructure
       working-directory: terraform
       run: |
-       terraform apply -auto-approve \
-       -var="ecr_repo_url=${{ secrets.ECR_REPO_URL }}" \
-       -var="database_url=${{ secrets.DATABASE_URL }}" \
-       -var="redis_url=${{ secrets.REDIS_URL }}"
+        terraform apply -auto-approve \
+          -var="ecr_repo_url=${{ secrets.ECR_REPO_URL }}" \
+          -var="database_url=${{ secrets.DATABASE_URL }}" \
+          -var="redis_url=${{ secrets.REDIS_URL }}"
 
