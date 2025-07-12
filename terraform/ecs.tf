@@ -1,7 +1,9 @@
+# ECS Cluster
 resource "aws_ecs_cluster" "medusa" {
   name = "medusa-cluster"
 }
 
+# ECS Task Definition
 resource "aws_ecs_task_definition" "medusa" {
   family                   = "medusa-task"
   network_mode             = "awsvpc"
@@ -11,25 +13,23 @@ resource "aws_ecs_task_definition" "medusa" {
   execution_role_arn       = aws_iam_role.ecs_task_exec.arn
   task_role_arn            = aws_iam_role.ecs_task_exec.arn
 
-  container_definitions = jsonencode([
-    {
-      name      = "medusa"
-      image     = var.ecr_repo_url
-      essential = true
-      portMappings = [
-        {
-          containerPort = 9000
-          hostPort      = 9000
-        }
-      ]
-      environment = [
-        { name = "DATABASE_URL", value = var.database_url },
-        { name = "REDIS_URL",    value = var.redis_url }
-      ]
-    }
-  ])
+  container_definitions = jsonencode([{
+    name      = "medusa"
+    image     = var.ecr_repo_url
+    essential = true
+    portMappings = [{
+      containerPort = 9000
+      hostPort      = 9000
+      protocol      = "tcp"
+    }],
+    environment = [
+      { name = "DATABASE_URL", value = var.database_url },
+      { name = "REDIS_URL",    value = var.redis_url }
+    ]
+  }])
 }
 
+# ECS Service
 resource "aws_ecs_service" "medusa" {
   name            = "medusa-service"
   cluster         = aws_ecs_cluster.medusa.id
@@ -40,7 +40,7 @@ resource "aws_ecs_service" "medusa" {
   network_configuration {
     subnets          = module.vpc.public_subnets
     assign_public_ip = true
-    security_groups  = [aws_security_group.ecs_service.id]
+    security_groups  = [aws_security_group.alb.id]  
   }
 
   load_balancer {
@@ -48,6 +48,6 @@ resource "aws_ecs_service" "medusa" {
     container_name   = "medusa"
     container_port   = 9000
   }
+
   depends_on = [aws_lb_listener.frontend]
 }
-
