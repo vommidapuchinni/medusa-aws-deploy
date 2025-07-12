@@ -31,6 +31,10 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
+    - name: Clean .terraform directory (important for module version issues)
+      run: rm -rf .terraform .terraform.lock.hcl
+      working-directory: terraform
+
     - name: Terraform Init
       working-directory: terraform
       run: terraform init
