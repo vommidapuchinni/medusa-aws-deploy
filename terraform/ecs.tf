@@ -1,32 +1,43 @@
+# ECS Cluster
 resource "aws_ecs_cluster" "medusa" {
   name = "medusa-cluster"
 }
 
+# CloudWatch Log Group for ECS logging
+resource "aws_cloudwatch_log_group" "ecs_medusa" {
+  name              = "/ecs/medusa"
+  retention_in_days = 7
+}
+
+# ECS Task Definition
 resource "aws_ecs_task_definition" "medusa" {
   family                   = "medusa-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn = aws_iam_role.ecs_task_exec.arn
-  task_role_arn      = aws_iam_role.ecs_task_exec.arn
+  execution_role_arn       = aws_iam_role.ecs_task_exec.arn
+  task_role_arn            = aws_iam_role.ecs_task_exec.arn
 
   container_definitions = jsonencode([{
     name      = "medusa"
     image     = var.ecr_repo_url
     essential = true
+
     portMappings = [{
       containerPort = 9000
       protocol      = "tcp"
-    }],
+    }]
+
     environment = [
       { name = "DATABASE_URL", value = var.database_url },
       { name = "REDIS_URL",    value = var.redis_url }
-    ],
+    ]
+
     logConfiguration = {
       logDriver = "awslogs"
       options = {
-        awslogs-group         = "/ecs/medusa"
+        awslogs-group         = aws_cloudwatch_log_group.ecs_medusa.name
         awslogs-region        = var.aws_region
         awslogs-stream-prefix = "ecs"
       }
@@ -34,6 +45,7 @@ resource "aws_ecs_task_definition" "medusa" {
   }])
 }
 
+# ECS Service
 resource "aws_ecs_service" "medusa" {
   name            = "medusa-service"
   cluster         = aws_ecs_cluster.medusa.id
@@ -53,6 +65,8 @@ resource "aws_ecs_service" "medusa" {
     container_port   = 9000
   }
 
-  depends_on = [aws_lb_listener.frontend]
+  depends_on = [
+    aws_lb_listener.frontend,
+    aws_cloudwatch_log_group.ecs_medusa
+  ]
 }
-
