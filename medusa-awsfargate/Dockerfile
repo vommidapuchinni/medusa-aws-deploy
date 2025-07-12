@@ -15,6 +15,5 @@ RUN if yarn run | grep -q 'build'; then yarn build; fi
 
 EXPOSE 9000
 
-# Run DB migrations before starting the server
-CMD yarn medusa migrations run && yarn start
-
+# Run database migrations before starting the server
+CMD yarn medusa db:migrate && yarn start
