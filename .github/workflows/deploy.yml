@@ -35,11 +35,13 @@ jobs:
       run: rm -rf .terraform .terraform.lock.hcl
       working-directory: terraform
 
-    - name: Terraform Init
+    - name: Terraform Init (with upgrade)
       working-directory: terraform
-      run: terraform init
+      run: terraform init -upgrade
 
     - name: Terraform Apply
       working-directory: terraform
-      run: terraform apply -auto-approve -var="ecr_repo_url=${{ secrets.ECR_REPO_URL }}" -var="database_url=${{ secrets.DATABASE_URL }}" -var="redis_url=${{ secrets.REDIS_URL }}"
-
+      run: terraform apply -auto-approve \
+        -var="ecr_repo_url=${{ secrets.ECR_REPO_URL }}" \
+        -var="database_url=${{ secrets.DATABASE_URL }}" \
+        -var="redis_url=${{ secrets.REDIS_URL }}"
