@@ -39,6 +39,13 @@ jobs:
       working-directory: terraform
       run: terraform init -upgrade
 
+    - name: Terraform Targeted Destroy (Clean Conflicts)
+      run: |
+       terraform destroy -auto-approve \
+       -target=aws_lb.medusa \
+       -target=aws_lb_target_group.medusa \
+       -target=aws_iam_role.ecs_task_exec
+
     - name: Terraform Apply
       working-directory: terraform
       run: |
