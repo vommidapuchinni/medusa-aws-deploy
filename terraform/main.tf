@@ -4,7 +4,7 @@ provider "aws" {
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "4.0.2"
+  version = "3.18.1"
 
   name = "medusa-vpc"
   cidr = "10.0.0.0/16"
