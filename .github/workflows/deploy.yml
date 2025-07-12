@@ -2,7 +2,7 @@ name: Deploy Medusa
 
 on:
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   deploy:
