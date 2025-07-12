@@ -9,37 +9,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📥 Checkout code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: 🔐 Configure AWS credentials
+    - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    - name: 🐳 Login to Amazon ECR
+    - name: Login to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: 🏗️ Build and Push Docker image
+    - name: Build and Push Docker image
       run: |
         docker build -t medusa ./medusa-awsfargate
         docker tag medusa:latest ${{ secrets.ECR_REPO_URL }}:latest
         docker push ${{ secrets.ECR_REPO_URL }}:latest
 
-    - name: 🧰 Setup Terraform
+    - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
-    - name: 🧹 Clean Terraform state (optional safety)
+    - name: Clean Terraform state (optional safety)
       run: rm -rf .terraform .terraform.lock.hcl
       working-directory: terraform
 
-    - name: 🛠️ Terraform Init
+    - name: Terraform Init
       working-directory: terraform
       run: terraform init -upgrade
 
-    - name: 🚀 Terraform Apply Infrastructure
+    - name: Terraform Apply Infrastructure
       working-directory: terraform
       run: |
         terraform apply -auto-approve \
