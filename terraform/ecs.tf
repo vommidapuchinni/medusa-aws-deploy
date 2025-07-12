@@ -8,8 +8,8 @@ resource "aws_ecs_task_definition" "medusa" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = "512"
   memory                   = "1024"
-  execution_role_arn       = data.aws_iam_role.ecs_task_exec.arn
-  task_role_arn            = data.aws_iam_role.ecs_task_exec.arn
+  execution_role_arn = aws_iam_role.ecs_task_exec.arn
+  task_role_arn      = aws_iam_role.ecs_task_exec.arn
 
   container_definitions = jsonencode([{
     name      = "medusa"
